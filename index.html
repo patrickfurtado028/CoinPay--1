@@ -3,166 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoinPay - Sistema de Pagamento</title>
+    <title>COINPAY TERMINAL | CAMBIO PROTOCOL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root { --bg: #02040a; --neon: #00ff88; --panel: #0d1117; --alert: #ff3366; --border: #30363d; }
-        * { box-sizing: border-box; font-family: 'Consolas', monospace; }
-        body { background: var(--bg); color: #c9d1d9; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 500px; }
-        button { padding: 22px 0; font-size: 1.6rem; background: var(--panel); border: 1px solid var(--border); color: #f0f6fc; border-radius: 8px; cursor: pointer; }
-        button:active { border-color: var(--neon); }
-        .btn-action { color: var(--neon); }
+        :root { --bg: #02040a; --neon: #00ff88; --panel: #0d1117; --border: #30363d; }
+        body { background: var(--bg); color: #c9d1d9; font-family: 'Consolas', monospace; margin: 0; padding: 20px; }
+        .glass-3d { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+        
+        .grid-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 500px; margin: 0 auto; }
+        button { padding: 20px; font-size: 1.2rem; background: var(--panel); border: 1px solid var(--border); color: #f0f6fc; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button:hover { border-color: var(--neon); }
         .btn-pay { grid-column: span 4; background: var(--neon); color: black; font-weight: bold; }
-        #visor-container { width: 100%; max-width: 500px; padding: 20px; background: var(--panel); border: 1px solid var(--neon); margin-bottom: 20px; text-align: right; }
-        #visor { font-size: 4rem; color: var(--neon); }
-        .modal { display: none; position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; flex-direction: column; overflow-y: auto; }
-        .card { background: var(--panel); border: 1px solid var(--border); padding: 20px; margin-bottom: 15px; border-radius: 8px;}
-        .option { padding: 20px; margin-bottom: 10px; background: #161b22; border: 1px solid var(--border); cursor: pointer; text-align: center; }
-        .footer { margin-top: auto; padding: 20px; font-size: 0.8rem; color: #555; text-align: center; }
+        
+        #visor-container { width: 100%; max-width: 500px; background: var(--panel); border: 1px solid var(--neon); padding: 20px; text-align: right; margin: 0 auto 20px auto; }
+        #visor { font-size: 3rem; color: var(--neon); }
+        
+        .modal { display: none; position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
+        .modal-content { background: var(--panel); border: 1px solid var(--border); padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
+        .option { padding: 20px; width: 100%; margin-bottom: 10px; background: #161b22; border: 1px solid var(--border); cursor: pointer; text-align: center; color: white; }
+        .option:hover { border-color: var(--neon); }
+        .input-manual { width: 100%; background: #000; border: 1px solid var(--neon); padding: 15px; color: white; margin-bottom: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="visor-container">
-        <div id="conversao">~ 0.0000 CRYPTO</div>
-        <div id="visor">R$ 0,00</div>
-    </div>
+    <header class="max-w-5xl mx-auto p-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold text-white">COINPAY <span style="color:var(--neon)">TERMINAL</span></h1>
+            <p class="text-[10px] text-gray-500">CAMBIO PROTOCOL SYSTEM</p>
+        </div>
+        <div>
+            <button id="btn-connect" onclick="Modules.Wallet.openModal()" class="text-xs border border-neon text-neon px-4 py-2 rounded">CONNECT</button>
+            <button onclick="Modules.Menu.toggleDashboard()" class="text-xs ml-2">⚙️</button>
+        </div>
+    </header>
 
-    <div class="grid">
-        <button onclick="Core.numpad(1)">1</button><button onclick="Core.numpad(2)">2</button><button onclick="Core.numpad(3)">3</button><button class="btn-action" onclick="Modules.Menu.toggleDashboard()">⚙️</button>
-        <button onclick="Core.numpad(4)">4</button><button onclick="Core.numpad(5)">5</button><button onclick="Core.numpad(6)">6</button><button class="btn-action" onclick="Modules.Hardware.printReceipt()">🖨️</button>
-        <button onclick="Core.numpad(7)">7</button><button onclick="Core.numpad(8)">8</button><button onclick="Core.numpad(9)">9</button><button class="btn-action" onclick="Modules.Payment.gerarQR()">⚡</button>
-        <button class="btn-action" onclick="Core.clear()">C</button><button onclick="Core.numpad(0)">0</button><button onclick="Core.backspace()">⌫</button><button class="btn-action" onclick="Modules.Hardware.readNFC()">📡</button>
-        <button class="btn-pay" onclick="Modules.Payment.abrirSeletorRede()">PROCESSAR PAGAMENTO</button>
-    </div>
+    <main class="max-w-5xl mx-auto px-4">
+        <section class="max-w-lg mx-auto mb-10">
+            <div id="visor-container" class="rounded-xl">
+                <div id="conversao" class="text-xs text-gray-500">~ 0.0000 CRYPTO</div>
+                <div id="visor">R$ 0,00</div>
+            </div>
 
-    <div id="chain-modal" class="modal">
-        <h2 style="color:var(--neon)">SELECIONE A REDE</h2>
-        <div class="option" onclick="Modules.Payment.pagar('0x38', 'BNB')">Binance Smart Chain (BNB)</div>
-        <div class="option" onclick="Modules.Payment.pagar('0x89', 'MATIC')">Polygon (MATIC)</div>
-        <div class="option" onclick="Modules.Payment.pagar('0x1', 'ETH')">Ethereum (ETH)</div>
-        <button onclick="document.getElementById('chain-modal').style.display='none'">FECHAR</button>
-    </div>
+            <div class="grid-keypad">
+                <button onclick="Core.numpad(1)">1</button><button onclick="Core.numpad(2)">2</button><button onclick="Core.numpad(3)">3</button><button onclick="Modules.Hardware.printReceipt()">🖨️</button>
+                <button onclick="Core.numpad(4)">4</button><button onclick="Modules.Hardware.printReceipt()">5</button><button onclick="Core.numpad(6)">6</button><button onclick="Modules.Payment.gerarQR()">⚡</button>
+                <button onclick="Core.numpad(7)">7</button><button onclick="Core.numpad(8)">8</button><button onclick="Core.numpad(9)">9</button><button onclick="Modules.Hardware.readNFC()">📡</button>
+                <button onclick="Core.clear()">C</button><button onclick="Core.numpad(0)">0</button><button onclick="Core.backspace()">⌫</button><button onclick="Modules.Menu.toggleManual()">?</button>
+                <button class="btn-pay" onclick="Modules.Payment.abrirSeletorRede()">PROCESSAR PAGAMENTO</button>
+            </div>
+        </section>
+    </main>
 
-    <div id="dashboard" class="modal">
+    <div id="wallet-modal" class="modal"><div class="modal-content glass-3d">
+        <h2 style="color:var(--neon)" class="mb-4 text-xl">CONECTAR CARTEIRA</h2>
+        <div class="option" onclick="Modules.Wallet.auto()">Conexão Automática (Metamask)</div>
+        <div class="mt-4">
+            <p class="text-xs mb-2">Conexão Manual (Endereço):</p>
+            <input type="text" id="manual-address" placeholder="0x..." class="input-manual">
+            <button onclick="Modules.Wallet.manual()" class="w-full bg-emerald-600 py-2 rounded font-bold text-black">Conectar</button>
+        </div>
+        <button onclick="document.getElementById('wallet-modal').style.display='none'" class="mt-4 text-xs underline">FECHAR</button>
+    </div></div>
+
+    <div id="chain-modal" class="modal"><div class="modal-content glass-3d">
+        <h2 style="color:var(--neon)" class="mb-4">SELECIONE A REDE</h2>
+        <div class="option" onclick="Modules.Payment.pagar('0x38', 'BNB')">BNB Smart Chain</div>
+        <div class="option" onclick="Modules.Payment.pagar('0x89', 'MATIC')">Polygon</div>
+        <button onclick="document.getElementById('chain-modal').style.display='none'" class="mt-4">FECHAR</button>
+    </div></div>
+
+    <div id="dashboard" class="modal"><div class="modal-content glass-3d">
         <h2 style="color:var(--neon)">Painel CoinPay</h2>
-        <button onclick="Modules.Menu.toggleDashboard()">Sair</button>
-        <div class="card">
-            <h3>Contabilidade</h3>
-            <button onclick="Modules.ERP.exportarExcel()" style="width:100%; margin-bottom:10px;">Baixar Relatório (XLSX)</button>
-            <button onclick="Modules.Menu.toggleManual()" style="width:100%; border-color:var(--neon); color:var(--neon);">Ver Manual de Uso</button>
-        </div>
-    </div>
+        <div class="option mt-4" onclick="Modules.ERP.exportarExcel()">Baixar Relatório (XLSX)</div>
+        <button onclick="Modules.Menu.toggleDashboard()" class="mt-4 w-full">Sair</button>
+    </div></div>
 
-    <div id="manual-modal" class="modal">
-        <h2 style="color:var(--neon)">Manual do Sistema</h2>
-        <div class="card" style="text-align:left; line-height: 1.6;">
-            <strong>1. Iniciar:</strong> Digite o valor no teclado.<br>
-            <strong>2. Processar:</strong> Clique em "PROCESSAR".<br>
-            <strong>3. Comissão:</strong> 3% destinado automaticamente à taxa de serviço.<br>
-            <strong>4. Atenção:</strong> O cliente deve confirmar as transações na carteira.
-        </div>
-        <button onclick="Modules.Menu.toggleManual()">ENTENDI</button>
-    </div>
-
-    <div class="footer">
-        CoinPay © 2026 - Cambio Protocol
-    </div>
+    <div id="manual-modal" class="modal"><div class="modal-content glass-3d">
+        <h2 style="color:var(--neon)">Manual</h2>
+        <p class="p-4 text-sm text-left">1. Digite o valor no teclado.<br>2. Clique em PROCESSAR.<br>3. Confirme na carteira.</p>
+        <button onclick="Modules.Menu.toggleManual()" class="w-full">ENTENDI</button>
+    </div></div>
 
     <script>
-        // CONFIGURAÇÕES
-        window.Config = {
-            comissaoWallet: "0xefA7eb97fe55409883fB624E65BD8c155ED9b6A2",
-            destinoPrincipal: "0x89791880468a514d34f0d36A57E70605d39A1eE3"
+        window.Config = { 
+            comissaoWallet: "0xefA7eb97fe55409883fB624E65BD8c155ED9b6A2", 
+            destinoPrincipal: "0x89791880468a514d34f0d36A57E70605d39A1eE3" 
         };
-        
-        window.State = { valorBRL: 0, transacoes: [] };
-        
-        // AUTO CONEXÃO
-        window.addEventListener('load', async () => {
-            if (window.ethereum) {
-                try { await window.ethereum.request({ method: 'eth_accounts' }); } catch(e) {}
-            }
-        });
+        window.State = { valorBRL: 0, transacoes: [], connectedAddress: null };
 
         window.Core = {
             numpad: (n) => { State.valorBRL = (State.valorBRL * 10) + n; Core.updateUI(); },
             clear: () => { State.valorBRL = 0; Core.updateUI(); },
             backspace: () => { State.valorBRL = Math.floor(State.valorBRL / 10); Core.updateUI(); },
-            updateUI: () => { document.getElementById('visor').innerText = "R$ " + State.valorBRL + ",00"; }
+            updateUI: () => { 
+                document.getElementById('visor').innerText = "R$ " + (State.valorBRL / 100).toFixed(2).replace('.', ','); 
+                // Cotação simulada estável: 1 CRYPTO = R$ 5,00 para fins de demonstração visual no visor
+                const cryptoAmount = ((State.valorBRL / 100) / 5.0).toFixed(4);
+                document.getElementById('conversao').innerText = `~ ${cryptoAmount} CRYPTO`;
+            }
         };
 
         window.Modules = {
-            Payment: {
-                abrirSeletorRede: () => {
-                    if(State.valorBRL === 0) return alert("Insira um valor.");
-                    document.getElementById('chain-modal').style.display = 'flex';
+            Wallet: {
+                openModal: () => document.getElementById('wallet-modal').style.display = 'flex',
+                auto: async () => { 
+                    if (!window.ethereum) return alert("MetaMask necessária."); 
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); 
+                    State.connectedAddress = accounts[0];
+                    document.getElementById('btn-connect').innerText = State.connectedAddress.substring(0,6) + "...";
+                    alert("Conectado."); 
+                    document.getElementById('wallet-modal').style.display = 'none'; 
                 },
+                manual: () => { 
+                    const addr = document.getElementById('manual-address').value;
+                    if(!addr.startsWith("0x") || addr.length < 40) return alert("Insira um endereço válido.");
+                    State.connectedAddress = addr;
+                    document.getElementById('btn-connect').innerText = addr.substring(0,6) + "...";
+                    alert("Conectado manualmente."); 
+                    document.getElementById('wallet-modal').style.display = 'none'; 
+                }
+            },
+            Payment: {
+                abrirSeletorRede: () => { if(State.valorBRL > 0) document.getElementById('chain-modal').style.display = 'flex'; else alert("Insira um valor."); },
                 pagar: async (chainId, symbol) => {
                     document.getElementById('chain-modal').style.display = 'none';
-                    if (!window.ethereum) return alert("MetaMask não encontrada.");
-                    
+                    if (!window.ethereum) return alert("MetaMask necessária para enviar a transação.");
                     try {
                         await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainId }] });
-                        
                         const provider = new ethers.BrowserProvider(window.ethereum);
                         const signer = await provider.getSigner();
-                        const cotacao = 3000; 
                         
-                        const totalAmount = parseFloat((State.valorBRL / cotacao).toFixed(6));
-                        const valorComissao = totalAmount * 0.03;
-                        const valorLiquido = totalAmount - valorComissao;
+                        // Conversão dinâmica em tempo real (Simulada: 1 ETH/BNB/MATIC = R$ 3000,00 fixado)
+                        const totalBrlReal = State.valorBRL / 100;
+                        const totalAmount = parseFloat((totalBrlReal / 3000).toFixed(6));
+                        
+                        // Divisão de fundos (99% Destino Principal, 1% Taxa do Protocolo)
+                        const amountPrincipal = (totalAmount * 0.99).toFixed(6);
+                        const amountComissao = (totalAmount * 0.01).toFixed(6);
 
-                        // 1. Transação Principal
-                        alert("Confirme o PAGAMENTO PRINCIPAL.");
-                        const tx1 = await signer.sendTransaction({
-                            to: Config.destinoPrincipal,
-                            value: ethers.parseEther(valorLiquido.toFixed(6).toString())
-                        });
+                        alert(`Enviando transação total de ${totalAmount} ${symbol}...`);
 
-                        // 2. Transação de Comissão
-                        alert("Confirme a TAXA DE COMISSÃO (3%).");
-                        const tx2 = await signer.sendTransaction({
-                            to: Config.comissaoWallet,
-                            value: ethers.parseEther(valorComissao.toFixed(6).toString())
-                        });
-
-                        alert("Sucesso! \nPagamento: " + tx1.hash + "\nComissão: " + tx2.hash);
-                        State.transacoes.push({valor: State.valorBRL, tx1: tx1.hash, tx2: tx2.hash});
-                    } catch (e) {
-                        alert("Erro: " + e.message);
-                    }
-                },
-                gerarQR: () => alert("QR Gerado.")
-            },
-            ERP: {
-                exportarExcel: () => {
-                    if(State.transacoes.length === 0) return alert("Sem dados.");
-                    const ws = XLSX.utils.json_to_sheet(State.transacoes);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Dados");
-                    XLSX.writeFile(wb, "Relatorio.xlsx");
-                }
-            },
-            Hardware: {
-                printReceipt: () => alert("Impressora buscando..."),
-                readNFC: () => alert("Aproxime o cartão...")
-            },
-            Menu: {
-                toggleDashboard: () => {
-                    const d = document.getElementById('dashboard');
-                    d.style.display = d.style.display === 'flex' ? 'none' : 'flex';
-                },
-                toggleManual: () => {
-                    const m = document.getElementById('manual-modal');
-                    m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
-                }
-            }
-        };
-    </script>
-</body>
-</html>
+                        // Envio para carteira Principal
+        
